@@ -4,11 +4,15 @@ body {
 	background: #ebebeb url('../img/light.png');
 	font-family: Molengo,"Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
 }
-.navbar { min-height: 50px; }
-.navbar-top { background-color: #444 !important; }
-.dropdown .dropdown-toggle { padding-bottom: 10px; padding-top: 10px; }
-.navbar-inverse .navbar-brand { color: #fff; padding: 15px 20px 10px; font-size: 16px; font-weight: 600; }
+::-webkit-scrollbar{ width: 6px; }
+::-webkit-scrollbar-track-piece{ background: #f8f8f8 url('../img/light.png'); }
+::-webkit-scrollbar-thumb{ border-radius: 9px; background-color: #2a2a2a; }
+::-webkit-scrollbar-thumb:hover{ background-color: #3a3a3a; }
+::-webkit-scrollbar-thumb:active{ background-color: #4a4a4a; }
 
+.navbar { min-height: 50px; }
+.dropdown .dropdown-toggle { padding-bottom: 10px; padding-top: 10px; }
+.navbar-inverse .navbar-brand { color: #fff; padding: 15px 20px 10px; font-size: 20px; font-weight: 600; }
 .announcement {
 	margin-top: 10px;
 	padding: 10px 10px 3px 10px;
@@ -25,7 +29,6 @@ body {
 .announcement:hover { border-bottom: solid 3px #159e83; transition: 0.3s; }
 .announcement p { display: inline-block; font-size: 15px; margin: 0; line-height: 1; text-indent: 5px; }
 .announcement i { display: inline-block; font-size: 15px; margin: 0; line-height: 1; color: #444; }
-
 .content {
 	margin-top: 30px;
 	margin-bottom: 30px;

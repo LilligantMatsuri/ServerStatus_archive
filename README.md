@@ -1,10 +1,12 @@
 # ServerStatus
 
-ServerStatus 是一个提供 Web 界面的云探针，能够实时展示多个服务器的网络连接、CPU、内存、硬盘容量等数据。
+![ServerStatus_preview.png](https://i.loli.net/2020/01/31/Iv47fYVSecxUCML.png)
+
+ServerStatus 是一个提供 Web 界面的云探针，能够实时展示多个服务器的网络连接、CPU、内存、硬盘容量等数据。  
 
 ## 安装
 
-#### 脚本部署
+### 脚本部署
 
 执行以下命令下载脚本并运行
 
@@ -39,7 +41,7 @@ ServerStatus 一键安装管理脚本 [vx.x.x]
 请输入选项的编号 [0-10]:
 ```
 
-#### 文件路径
+### 文件路径
 
 ServerStatus 安装路径：/usr/local/ServerStatus
 
@@ -62,23 +64,15 @@ ServerStatus
     ├─ jq
 ```
 
-#### 常见问题
+### 常见问题
 
-##### 终端输入中文显示错误
+#### Q：终端输入中文显示错误
 
-输入的节点名称、位置等含有中文字符时，如果终端模拟器不支持中文编码，将无法正常显示。可以先输入任意内容，然后再修改 config.json 中的相应字段。**修改后需要重启服务端才能在网页上体现**。
-
-##### 连接数显示异常（CentOS 7）
-
-CentOS 7 如未安装 `netstat` 将导致 IP 连接数检测出错，手动安装即可
-
-```bash
-yum install net-tools -y
-```
+**A**：输入的节点名称、位置等含有中文字符时，如果终端模拟器不支持中文编码，将无法正常显示。可以先输入任意内容，然后再修改 config.json 中的相应字段。**修改后需要重启服务端才能在网页上体现**。
 
 ## 管理
 
-#### 服务端
+### 服务端
 
 - 启动：`service status-server start`
 
@@ -90,7 +84,7 @@ yum install net-tools -y
 
 - 日志：`tail -f /tmp/serverstatus_server.log`
 
-#### 客户端
+### 客户端
 
 - 启动：`service status-client start`
 
@@ -102,7 +96,7 @@ yum install net-tools -y
 
 - 日志：`tail -f /tmp/serverstatus_client.log`
 
-#### Caddy
+### Caddy
 
 - 启动：`service caddy start`
 
@@ -113,6 +107,18 @@ yum install net-tools -y
 - 状态：`service caddy status`
 
 ## 更新
+
+**2020.02.01**
+
+> - 更新部署脚本
+>   
+>   - 更正客户端下载链接
+>   
+>   - 修复 CentOS 版本检测错误
+>   
+>   - 改进提示信息
+> 
+> - 调整前端样式
 
 **2020.01.29**
 
@@ -139,3 +145,4 @@ yum install net-tools -y
 * [ServerStatus](https://github.com/BotoX/ServerStatus) by **BotoX**
 * [ServerStatus-Toyo](https://github.com/ToyoDAdoubi/ServerStatus-Toyo) by **ToyoDAdoubi**
 * [flag-icon-css](https://github.com/lipis/flag-icon-css) by **lipis**
+* [![jsDelivr](https://www.jsdelivr.com/img/logo-horizontal.svg)](https://www.jsdelivr.com/)
