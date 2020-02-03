@@ -2,7 +2,7 @@
 
 ![ServerStatus_preview.png](https://i.loli.net/2020/01/31/Iv47fYVSecxUCML.png)
 
-ServerStatus 是一个提供 Web 界面的云探针，能够实时展示多个服务器的网络连接、CPU、内存、硬盘容量等数据。  
+ServerStatus 是一个提供 Web 界面的云探针，能够实时展示多个服务器的网络连接、CPU、内存、硬盘容量等数据。
 
 ## 安装
 
@@ -17,7 +17,7 @@ wget -N --no-check-certificate https://raw.githubusercontent.com/LilligantMatsur
 运行后会显示如下操作菜单，按照提示进行操作即可
 
 ```bash
-ServerStatus 一键安装管理脚本 [vx.x.x]
+  ServerStatus 一键安装管理脚本 [vx.x.x]
 -- Author: Toyo | Maintainer: Matsuri --
 
  0. 升级脚本
@@ -48,7 +48,7 @@ ServerStatus 安装路径：/usr/local/ServerStatus
 ```bash
 ServerStatus
     ├─ client
-        ├─status-client.py
+        ├─ status-client.py
     ├─ server
         ├─ config.conf
         ├─ config.json ................ 节点配置文件
@@ -107,6 +107,10 @@ ServerStatus
 - 状态：`service caddy status`
 
 ## 更新
+
+**2020.02.03**
+
+> - 客户端兼容 Python 3
 
 **2020.02.01**
 

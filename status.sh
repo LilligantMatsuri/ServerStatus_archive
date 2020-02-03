@@ -711,7 +711,7 @@ Install_ServerStatus_client(){
 	[[ -e "${client_file}/status-client.py" ]] && echo -e "${Error} 检测到 ServerStatus 客户端已安装！\n" && exit 1
 	check_sys
 	if [[ ${release} == "centos" ]]; then
-		centos_ver=$(cat /etc/redhat-release | grep "release " | awk '{print $4}' | awk '{split($1,a,"."); print a[1]}')
+		centos_ver=$(cat /etc/redhat-release | grep "release " | awk '{print $4}' | awk -F '.' '{print $1}')
 		if [[ ${centos_ver} -lt 7 ]]; then
 			echo -e "${Info} 检测到您正在使用 CentOS 6（甚至更低版本）系统。由于内置的 Python 版本过低，将导致客户端无法运行"
 			echo -e "${Tip} 如果您仍然要继续安装，请您自行升级 Python 至 2.7 版本。是否要继续？[y/N]"
@@ -965,7 +965,7 @@ Update_Shell(){
 }
 menu_client(){
 echo && echo -e "  ServerStatus 一键安装管理脚本 ${Red_font_prefix}[v${sh_ver}]${Font_color_suffix}
-  -- Author: Toyo | Maintainer: Matsuri --
+ -- Author: Toyo | Maintainer: Matsuri --
   
  ${Green_font_prefix} 0.${Font_color_suffix} 升级脚本
  ————————————
@@ -1044,7 +1044,7 @@ esac
 }
 menu_server(){
 echo && echo -e "  ServerStatus 一键安装管理脚本 ${Red_font_prefix}[v${sh_ver}]${Font_color_suffix}
-  -- Author: Toyo | Maintainer: Matsuri --
+ -- Author: Toyo | Maintainer: Matsuri --
   
  ${Green_font_prefix} 0.${Font_color_suffix} 升级脚本
  ————————————

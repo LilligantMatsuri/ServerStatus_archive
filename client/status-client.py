@@ -2,7 +2,7 @@
 
 SERVER = "127.0.0.1"
 PORT = PORT
-USER = "USER" 
+USER = "USER"
 PASSWORD = "USER_PASSWORD"
 INTERVAL = 1 #更新间隔，单位：秒
 
@@ -65,7 +65,7 @@ def get_load():
 	#return os.getloadavg()[0]
 
 def get_time():
-	stat_file = file("/proc/stat", "r")
+	stat_file = open("/proc/stat", "r")
 	time_list = stat_file.readline().split(' ')[2:6]
 	stat_file.close()
 	for i in range(len(time_list))  :
@@ -152,10 +152,10 @@ if __name__ == '__main__':
 			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			s.connect((SERVER, PORT))
 			data = s.recv(1024)
-			if data.find("Authentication required") > -1:
-				s.send(USER + ':' + PASSWORD + '\n')
+			if data.find(b"Authentication required") > -1:
+				s.send(USER.encode() + b':' + PASSWORD.encode() + b'\n')
 				data = s.recv(1024)
-				if data.find("Authentication successful") < 0:
+				if data.find(b"Authentication successful") < 0:
 					print(data)
 					raise socket.error
 			else:
@@ -168,9 +168,9 @@ if __name__ == '__main__':
 
 			timer = 0
 			check_ip = 0
-			if data.find("IPv4") > -1:
+			if data.find(b"IPv4") > -1:
 				check_ip = 6
-			elif data.find("IPv6") > -1:
+			elif data.find(b"IPv6") > -1:
 				check_ip = 4
 			else:
 				print(data)
@@ -208,7 +208,7 @@ if __name__ == '__main__':
 				array['network_in'] = NET_IN
 				array['network_out'] = NET_OUT
 
-				s.send("update " + json.dumps(array) + "\n")
+				s.send(b"update " + json.dumps(array).encode() + b"\n")
 		except KeyboardInterrupt:
 			raise
 		except socket.error:
