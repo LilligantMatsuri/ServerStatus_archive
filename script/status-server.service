@@ -1,0 +1,18 @@
+[Unit]
+Description=ServerStatus-server
+Documentation=https://github.com/LilligantMatsuri/ServerStatus
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=sh -c 'sssport=$(cat /usr/local/ServerStatus/server/config.conf | awk '{print $3}') | \
+				nohup /usr/local/ServerStatus/server/sergate \
+				--config=/usr/local/ServerStatus/server/config.json \
+				--web-dir=/usr/local/ServerStatus/web \
+				--port=${sssport} \
+				> /tmp/serverstatus_server.log 2>&1 &'
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+Alias=sss

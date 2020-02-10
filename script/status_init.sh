@@ -2,15 +2,15 @@
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
 
-#=================================================
+#==============================================================
 #	Required System: CentOS / Debian / Ubuntu
-#	Description: ServerStatus client + server
-#	Version: 1.1.1
+#	Description: ServerStatus deployment & management
+#	Version: 1.1.2 (init)
 #	Author: Toyo
 #	Maintainer: Matsuri
-#=================================================
+#==============================================================
 
-sh_ver="1.1.1"
+sh_ver="1.1.2"
 filepath=$(cd "$(dirname "$0")"; pwd)
 file_1=$(echo -e "${filepath}"|awk -F "$0" '{print $1}')
 file="/usr/local/ServerStatus"
@@ -837,9 +837,9 @@ Uninstall_ServerStatus_server(){
 		else
 			update-rc.d -f status-server remove
 		fi
-		echo && echo -e "${Info} ServerStatus 服务端卸载完成！" && echo
+		echo -e "${Info} ServerStatus 服务端卸载完成！\n"
 	else
-		echo && echo -e "${Info} 已取消卸载..." && echo
+		echo -e "${Info} 已取消卸载...\n"
 	fi
 }
 Start_ServerStatus_client(){
@@ -883,9 +883,9 @@ Uninstall_ServerStatus_client(){
 		else
 			update-rc.d -f status-client remove
 		fi
-		echo && echo -e "${Info} ServerStatus 客户端卸载完成！" && echo
+		echo -e "${Info} ServerStatus 客户端卸载完成！\n"
 	else
-		echo && echo -e "${Info} 已取消卸载..." && echo
+		echo -e "${Info} 已取消卸载...\n"
 	fi
 }
 View_ServerStatus_client(){
@@ -949,8 +949,8 @@ Set_iptables(){
 	fi
 }
 Update_Shell(){
-	sh_new_ver=$(wget --no-check-certificate -qO- -t1 -T3 "https://raw.githubusercontent.com/LilligantMatsuri/ServerStatus/master/status.sh"|grep 'sh_ver="'|awk -F "=" '{print $NF}'|sed 's/\"//g'|head -1) && sh_new_type="github"
-	[[ -z ${sh_new_ver} ]] && echo -e "${Error} 无法连接 GitHub !\n" && exit 0
+	sh_new_ver=$(wget --no-check-certificate -qO- -t1 -T3 "https://raw.githubusercontent.com/LilligantMatsuri/ServerStatus/master/script/status_init.sh"|grep 'sh_ver="'|awk -F "=" '{print $NF}'|sed 's/\"//g'|head -1) && sh_new_type="github"
+	[[ -z ${sh_new_ver} ]] && echo -e "${Error} 无法连接 GitHub！\n" && exit 0
 	if [[ -e "/etc/init.d/status-client" ]]; then
 		rm -rf /etc/init.d/status-client
 		Service_Server_Status_client
@@ -959,7 +959,7 @@ Update_Shell(){
 		rm -rf /etc/init.d/status-server
 		Service_Server_Status_server
 	fi
-	wget -N --no-check-certificate "https://raw.githubusercontent.com/LilligantMatsuri/ServerStatus/master/status.sh" && chmod +x status.sh
+	wget -N --no-check-certificate "https://raw.githubusercontent.com/LilligantMatsuri/ServerStatus/master/script/status_init.sh" -O status.sh && chmod +x status.sh
 	echo -e "${Info} 脚本已更新至最新版本 ${Red_font_prefix}[v${sh_new_ver}]${Font_color_suffix}！"
 	echo -e "${Tip} 由于更新方式为覆盖当前运行的脚本，若产生报错信息，无视即可\n" && exit 0
 }
@@ -1112,6 +1112,7 @@ case "$num" in
 	;;
 esac
 }
+
 check_sys
 action=$1
 if [[ ! -z $action ]]; then

@@ -8,13 +8,19 @@ ServerStatus 是一个提供 Web 界面的云探针，能够实时展示多个�
 
 ### 脚本部署
 
-执行以下命令下载脚本并运行
+**v2** - 系统版本为 CentOS 7+ / Debian 8+ / Ubuntu 15.04+
 
 ```bash
-wget -N --no-check-certificate https://raw.githubusercontent.com/LilligantMatsuri/ServerStatus/master/status.sh && chmod +x status.sh
+wget -N --no-check-certificate https://git.io/Jvc6U -O status.sh && chmod +x status.sh && bash status.sh
 ```
 
-运行后会显示如下操作菜单，按照提示进行操作即可
+**v1** - 系统低于上述版本
+
+```bash
+wget -N --no-check-certificate https://git.io/Jvc6G -O status.sh && chmod +x status.sh && bash status.sh
+```
+
+运行脚本后将显示如下菜单，根据提示进行操作即可
 
 ```bash
   ServerStatus 一键安装管理脚本 [vx.x.x]
@@ -41,7 +47,7 @@ wget -N --no-check-certificate https://raw.githubusercontent.com/LilligantMatsur
 请输入选项的编号 [0-10]:
 ```
 
-### 文件路径
+### 文件目录
 
 ServerStatus 安装路径：/usr/local/ServerStatus
 
@@ -108,6 +114,10 @@ ServerStatus
 
 ## 更新
 
+**2020.02.10**
+
+> - 新增部署脚本 v2，使用 systemd 管理服务
+
 **2020.02.03**
 
 > - 客户端兼容 Python 3
@@ -126,7 +136,7 @@ ServerStatus
 
 **2020.01.29**
 
-> - 修改部署脚本
+> - 更新部署脚本
 > 
 > - 添加 flag-icon-css 支持
 > 
