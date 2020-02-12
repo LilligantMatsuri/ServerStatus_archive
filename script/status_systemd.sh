@@ -5,12 +5,12 @@ export PATH
 #==============================================================
 #	Required System: CentOS 7+ / Debian 8+ / Ubuntu 15.04+
 #	Description: ServerStatus deployment & management
-#	Version: 2.0.0 (systemd)
+#	Version: 2.0.2 (systemd)
 #	Author: Toyo
 #	Maintainer: Matsuri
 #==============================================================
 
-sh_ver="2.0.0"
+sh_ver="2.0.2"
 filepath=$(cd "$(dirname "$0")"; pwd)
 file_1=$(echo -e "${filepath}"|awk -F "$0" '{print $1}')
 file="/usr/local/ServerStatus"
@@ -30,18 +30,17 @@ Tip="${Yellow_font_prefix}[提示]${Font_color_suffix}"
 
 #检查
 check_sys(){
-	if [[ -f /etc/centos-release ]]; then
-		release="centos"
-	elif cat /etc/issue | grep -q -E -i "debian"; then
-		release="debian"
-	elif cat /etc/issue | grep -q -E -i "ubuntu"; then
-		release="ubuntu"
-	elif cat /proc/version | grep -q -E -i "centos|red hat|redhat"; then
-		release="centos"
-	elif cat /proc/version | grep -q -E -i "debian"; then
-		release="debian"
-	elif cat /proc/version | grep -q -E -i "ubuntu"; then
-		release="ubuntu"
+	systemd_status=$(systemctl --version 2>&1)
+	if [[ $? -eq 0 ]]; then
+		if cat /etc/os-release | grep "NAME" | grep -q -E -i "centos"; then
+			release="centos"
+		elif cat /etc/os-release | grep "NAME" | grep -q -E -i "debian"; then
+			release="debian"
+		elif cat /etc/os-release | grep "NAME" | grep -q -E -i "ubuntu"; then
+			release="ubuntu"
+		fi
+	else
+		echo -e "${Error} 您的系统不支持 systemd，无法使用此脚本！\n" && exit 1
     fi
 	bit=`uname -m`
 }
@@ -144,36 +143,33 @@ Service_Server_Status_client(){
 	echo -e "${Info} ServerStatus 客户端服务管理脚本下载完成！"
 }
 Installation_dependency(){
-	mode=$1
-	[[ -z ${mode} ]] && mode="server"
-	if [[ ${mode} == "server" ]]; then
-		if [[ ${release} == "centos" ]]; then
-			yum update
-			yum install -y unzip vim make net-tools
-			yum groupinstall "Development Tools" -y
-		else
-			apt-get update
-			apt-get install -y unzip vim build-essential make
-		fi
+	if [[ ${release} == "centos" ]]; then
+		yum update
+		yum install -y unzip net-tools
+		yum groupinstall "Development Tools" -y
+	else
+		apt-get update
+		apt-get install -y unzip net-tools build-essential
 	fi
 }
 Installation_Python(){
-	py_ver=$(python -V 2>&1 | awk '{print $2}' | awk -F '.' '{print $1}')
+	py_stat=$(python -V 2>&1); if [[ $? -eq 0 ]]; then epy="y"; else epy="n"; fi
 	if [[ ${release} == "centos" ]]; then
-	centos_ver=$(cat /etc/redhat-release | grep "release " | awk '{print $4}' | awk -F '.' '{print $1}')
-		if [[ ${centos_ver} -ge 8 ]]; then
-			if [[ -z ${py_ver} ]]; then
-				echo -e "${Info} 您正在使用的 CentOS 未安装 Python，将为您安装 Python 2.7 并设置为默认版本"
+		centos_ver=$(cat /etc/os-release | grep "VERSION_ID" | awk -F '"' '{print $2}')
+		yum update
+		yum install -y net-tools
+		if [[ ${epy} == "n" ]]; then
+			if [[ ${centos_ver} -ge 8 ]]; then
 				yum install -y python2
 				alternatives --set python /usr/bin/python2
-			fi
-		else
-			if [[ -z ${py_ver} ]]; then
+			else
 				yum install -y python
 			fi
 		fi
 	else
-		if [[ -z ${py_ver} ]]; then
+		apt-get update
+		apt-get install -y net-tools
+		if [[ ${epy} == "n" ]]; then
 			apt-get install -y python
 		fi
 	fi
@@ -640,26 +636,14 @@ Install_caddy(){
 		else
 			echo -e "${Info} Caddy 已安装，开始配置..."
 		fi
-		if [[ ! -s "/usr/local/caddy/Caddyfile" ]]; then
-			cat > "/usr/local/caddy/Caddyfile"<<-EOF
+		cat >> "/usr/local/caddy/Caddyfile"<<-EOF
 http://${server_s}:${server_http_port_s} {
  root ${web_file}
  timeouts none
  gzip
 }
 EOF
-			/etc/init.d/caddy restart
-		else
-			echo -e "${Info} Caddy 配置文件存在内容，ServerStatus 网站配置将追加在末尾"
-			cat >> "/usr/local/caddy/Caddyfile"<<-EOF
-http://${server_s}:${server_http_port_s} {
- root ${web_file}
- timeouts none
- gzip
-}
-EOF
-			/etc/init.d/caddy restart
-		fi
+		/etc/init.d/caddy restart
 	else
 		echo -e "${Info} HTTP 服务部署已跳过，请手动部署。Web 文件位置：${Green_font_prefix}${web_file}${Font_color_suffix}"
 	fi
@@ -668,8 +652,7 @@ Install_ServerStatus_server(){
 	[[ -e "${server_file}/sergate" ]] && echo -e "${Error} 检测到 ServerStatus 服务端已安装！\n" && exit 1
 	Set_server_port
 	echo -e "${Info} 正在下载安装依赖..."
-	Installation_dependency "server"
-	Installation_Python
+	Installation_dependency
 	Install_caddy
 	echo -e "${Info} 正在下载安装服务端..."
 	Download_Server_Status_server
@@ -694,7 +677,6 @@ Install_ServerStatus_client(){
 	echo -e "${Info} 正在设置用户配置..."
 	Set_config_client
 	echo -e "${Info} 正在下载安装依赖..."
-	Installation_dependency "client"
 	Installation_Python
 	echo -e "${Info} 正在下载安装客户端..."
 	Download_Server_Status_client
@@ -719,7 +701,6 @@ Update_ServerStatus_server(){
 	check_pid_server
 	[[ ! -z ${PID} ]] && systemctl stop status-server
 	Download_Server_Status_server
-	rm -rf /usr/lib/systemd/system/status-server.service
 	Service_Server_Status_server
 	Start_ServerStatus_server
 }
@@ -744,7 +725,6 @@ Update_ServerStatus_client(){
 	Download_Server_Status_client
 	Read_config_client
 	Modify_config_client
-	rm -rf /usr/lib/systemd/system/status-client.service
 	Service_Server_Status_client
 	Start_ServerStatus_client
 }
@@ -754,17 +734,15 @@ Start_ServerStatus_server(){
 	check_installed_server_status
 	check_pid_server
 	if [[ ! -z ${PID} ]]; then
-		echo -e "${Error} 服务端已运行，请检查！\n" && exit 1
+		echo -e "${Error} ServerStatus 服务端已运行，请检查！\n" && exit 1
 	else
-		Read_config_server
-		ulimit -n 51200
-		nohup ${server_file}/sergate --config=${server_json} --web-dir=${web_file} --port=${server_port} > ${server_log_file} 2>&1 &
-		sleep 2s 
+		systemctl start status-server
+		sleep 1s 
 		check_pid_server
 		if [[ ! -z ${PID} ]]; then
-			echo -e "${Info} 服务端启动成功！"
+			echo -e "${Info} ServerStatus 服务端启动成功！"
 		else
-			echo -e "${Error} 服务端启动失败！"
+			echo -e "${Error} ServerStatus 服务端启动失败！"
 		fi
 	fi
 }
@@ -772,15 +750,15 @@ Stop_ServerStatus_server(){
 	check_installed_server_status
 	check_pid_server
 	if [[ -z ${PID} ]]; then
-		echo -e "${Error} 服务端未运行，请检查！\n" && exit 1
+		echo -e "${Error} ServerStatus 服务端未运行，请检查！\n" && exit 1
 	else
-		kill -9 ${PID}
-		sleep 2s
+		systemctl stop status-server
+		sleep 1s
 		check_pid_server
 		if [[ -z ${PID} ]]; then
-			echo -e "${Info} 服务端停止成功！"
+			echo -e "${Info} ServerStatus 服务端停止成功！"
 		else
-			echo -e "${Error} 服务端停止失败！"
+			echo -e "${Error} ServerStatus 服务端停止失败！"
 		fi
 	fi
 }
@@ -796,13 +774,13 @@ Restart_ServerStatus_server(){
 }
 Uninstall_ServerStatus_server(){
 	check_installed_server_status
-	echo -e "${Tip} 是否要卸载服务端？（若同时安装了客户端，则仅卸载服务端）[y/N]"
+	echo -e "${Tip} 是否要卸载 ServerStatus 服务端？（若同时安装了客户端，则仅卸载服务端）[y/N]"
 	echo
 	read -e -p "(默认: n):" unyn
 	[[ -z ${unyn} ]] && unyn="n"
 	if [[ ${unyn} == [Yy] ]]; then
 		check_pid_server
-		[[ ! -z $PID ]] && kill -9 ${PID}
+		[[ ! -z $PID ]] && systemctl stop status-server
 		Read_config_server
 		Del_iptables "${server_port}"
 		Save_iptables
@@ -820,6 +798,7 @@ Uninstall_ServerStatus_server(){
 			rm -rf caddy_install.sh
 		fi
 		systemctl disable status-server
+		rm -rf "/etc/systemd/system/statuss.service"
 		rm -rf "/usr/lib/systemd/system/status-server.service"
 		systemctl daemon-reload
 		echo -e "${Info} ServerStatus 服务端卸载完成！\n"
@@ -831,16 +810,15 @@ Start_ServerStatus_client(){
 	check_installed_client_status
 	check_pid_client
 	if [[ ! -z ${PID} ]]; then
-		echo -e "${Error} ServerStatus 已运行，请检查！\n" && exit 1
+		echo -e "${Error} ServerStatus 客户端已运行，请检查！\n" && exit 1
 	else
-		ulimit -n 51200
-		nohup python ${client_file}/status-client.py > ${client_log_file} 2>&1 &
-		sleep 2s 
+		systemctl start status-client
+		sleep 1s 
 		check_pid_client
 		if [[ ! -z ${PID} ]]; then
-			echo -e "${Info} 客户端启动成功！"
+			echo -e "${Info} ServerStatus 客户端启动成功！"
 		else
-			echo -e "${Error} 客户端启动失败！"
+			echo -e "${Error} ServerStatus 客户端启动失败！"
 		fi
 	fi
 }
@@ -848,15 +826,15 @@ Stop_ServerStatus_client(){
 	check_installed_client_status
 	check_pid_client
 	if [[ -z ${PID} ]]; then 
-		echo -e "${Error} ServerStatus 未运行，请检查！\n" && exit 1
+		echo -e "${Error} ServerStatus 客户端未运行，请检查！\n" && exit 1
 	else
-		kill -9 ${PID}
-		sleep 2s
+		systemctl stop status-client
+		sleep 1s
 		check_pid_client
 		if [[ -z ${PID} ]]; then
-			echo -e "${Info} 服务端停止成功！"
+			echo -e "${Info} ServerStatus 服务端停止成功！"
 		else
-			echo -e "${Error} 服务端停止失败！"
+			echo -e "${Error} ServerStatus 服务端停止失败！"
 		fi
 	fi
 }
@@ -872,13 +850,13 @@ Restart_ServerStatus_client(){
 }
 Uninstall_ServerStatus_client(){
 	check_installed_client_status
-	echo -e "${Tip} 是否要卸载客户端？（若同时安装了服务端，则仅卸载客户端）[y/N]"
+	echo -e "${Tip} 是否要卸载 ServerStatus 客户端？（若同时安装了服务端，则仅卸载客户端）[y/N]"
 	echo
 	read -e -p "(默认: n):" unyn
 	[[ -z ${unyn} ]] && unyn="n"
 	if [[ ${unyn} == [Yy] ]]; then
 		check_pid_client
-		[[ ! -z $PID ]] && kill -9 ${PID}
+		[[ ! -z $PID ]] && systemctl stop status-client
 		Read_config_client
 		Del_iptables_OUT "${client_port}"
 		Save_iptables
@@ -888,6 +866,7 @@ Uninstall_ServerStatus_client(){
 			rm -rf "${file}"
 		fi
 		systemctl disable status-client
+		rm -rf "/etc/systemd/system/statusc.service"
 		rm -rf "/usr/lib/systemd/system/status-client.service"
 		systemctl daemon-reload
 		echo -e "${Info} ServerStatus 客户端卸载完成！\n"
@@ -921,52 +900,64 @@ View_server_Log(){
 Add_iptables_OUT(){
 	iptables_ADD_OUT_port=$1
 	iptables -I OUTPUT -m state --state NEW -m tcp -p tcp --dport ${iptables_ADD_OUT_port} -j ACCEPT
+	ip6tables -I OUTPUT -m state --state NEW -m tcp -p tcp --dport ${iptables_ADD_OUT_port} -j ACCEPT
 	iptables -I OUTPUT -m state --state NEW -m udp -p udp --dport ${iptables_ADD_OUT_port} -j ACCEPT
+	ip6tables -I OUTPUT -m state --state NEW -m udp -p udp --dport ${iptables_ADD_OUT_port} -j ACCEPT
 }
 Del_iptables_OUT(){
 	iptables_DEL_OUT_port=$1
 	iptables -D OUTPUT -m state --state NEW -m tcp -p tcp --dport ${iptables_DEL_OUT_port} -j ACCEPT
+	ip6tables -D OUTPUT -m state --state NEW -m tcp -p tcp --dport ${iptables_DEL_OUT_port} -j ACCEPT
 	iptables -D OUTPUT -m state --state NEW -m udp -p udp --dport ${iptables_DEL_OUT_port} -j ACCEPT
+	ip6tables -D OUTPUT -m state --state NEW -m udp -p udp --dport ${iptables_DEL_OUT_port} -j ACCEPT
 }
 Add_iptables(){
 	iptables_ADD_IN_port=$1
 	iptables -I INPUT -m state --state NEW -m tcp -p tcp --dport ${iptables_ADD_IN_port} -j ACCEPT
+	ip6tables -I INPUT -m state --state NEW -m tcp -p tcp --dport ${iptables_ADD_IN_port} -j ACCEPT
 	iptables -I INPUT -m state --state NEW -m udp -p udp --dport ${iptables_ADD_IN_port} -j ACCEPT
+	ip6tables -I INPUT -m state --state NEW -m udp -p udp --dport ${iptables_ADD_IN_port} -j ACCEPT
 }
 Del_iptables(){
 	iptables_DEL_IN_port=$1
 	iptables -D INPUT -m state --state NEW -m tcp -p tcp --dport ${iptables_DEL_IN_port} -j ACCEPT
+	ip6tables -D INPUT -m state --state NEW -m tcp -p tcp --dport ${iptables_DEL_IN_port} -j ACCEPT
 	iptables -D INPUT -m state --state NEW -m udp -p udp --dport ${iptables_DEL_IN_port} -j ACCEPT
+	ip6tables -D INPUT -m state --state NEW -m udp -p udp --dport ${iptables_DEL_IN_port} -j ACCEPT
 }
 Save_iptables(){
 	if [[ ${release} == "centos" ]]; then
 		service iptables save
+		service ip6tables save
 	else
 		iptables-save > /etc/iptables.up.rules
+		ip6tables-save > /etc/ip6tables.up.rules
 	fi
 }
 Set_iptables(){
 	if [[ ${release} == "centos" ]]; then
 		service iptables save
+		service ip6tables save
 		chkconfig --level 2345 iptables on
 	else
 		iptables-save > /etc/iptables.up.rules
 		echo -e '#!/bin/bash\n/sbin/iptables-restore < /etc/iptables.up.rules' > /etc/network/if-pre-up.d/iptables
 		chmod +x /etc/network/if-pre-up.d/iptables
+		ip6tables-save > /etc/ip6tables.up.rules
+		echo -e '#!/bin/bash\n/sbin/ip6tables-restore < /etc/ip6tables.up.rules' > /etc/network/if-pre-up.d/ip6tables
+		chmod +x /etc/network/if-pre-up.d/ip6tables
 	fi
 }
 Update_Shell(){
 	sh_new_ver=$(wget --no-check-certificate -qO- -t1 -T3 "https://raw.githubusercontent.com/LilligantMatsuri/ServerStatus/master/script/status_systemd.sh"|grep 'sh_ver="'|awk -F "=" '{print $NF}'|sed 's/\"//g'|head -1) && sh_new_type="github"
 	[[ -z ${sh_new_ver} ]] && echo -e "${Error} 无法连接 GitHub！\n" && exit 0
 	if [[ -e "/usr/lib/systemd/system/status-client.service" ]]; then
-		rm -rf /usr/lib/systemd/system/status-client.service
 		Service_Server_Status_client
 	fi
 	if [[ -e "/usr/lib/systemd/system/status-server.service" ]]; then
-		rm -rf /usr/lib/systemd/system/status-server.service
 		Service_Server_Status_server
 	fi
-	wget -N --no-check-certificate "https://raw.githubusercontent.com/LilligantMatsuri/ServerStatus/master/script/status_systemd.sh" -O status.sh && chmod +x status.sh
+	wget --no-check-certificate "https://raw.githubusercontent.com/LilligantMatsuri/ServerStatus/master/script/status_systemd.sh" -O status.sh && chmod +x status.sh
 	echo -e "${Info} 脚本已更新至最新版本 ${Red_font_prefix}[v${sh_new_ver}]${Font_color_suffix}！"
 	echo -e "${Tip} 由于更新方式为覆盖当前运行的脚本，若产生报错信息，无视即可\n" && exit 0
 }

@@ -5,14 +5,16 @@ After=network-online.target
 
 [Service]
 Type=simple
-ExecStart=sh -c 'sssport=$(cat /usr/local/ServerStatus/server/config.conf | awk '{print $3}') | \
-				nohup /usr/local/ServerStatus/server/sergate \
-				--config=/usr/local/ServerStatus/server/config.json \
-				--web-dir=/usr/local/ServerStatus/web \
-				--port=${sssport} \
-				> /tmp/serverstatus_server.log 2>&1 &'
+ExecStartPre=sh -c "systemctl set-environment \
+        sssport=$$(cat /usr/local/ServerStatus/server/config.conf | awk \'{print $3}\')"
+ExecStart=/usr/local/ServerStatus/server/sergate \
+        --config=/usr/local/ServerStatus/server/config.json \
+        --web-dir=/usr/local/ServerStatus/web \
+        --port=${sssport}
+StandardOutput=file:/tmp/serverstatus_server.log
+StandardError=file:/tmp/serverstatus_server.log
 Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target
-Alias=sss
+Alias=statuss.service

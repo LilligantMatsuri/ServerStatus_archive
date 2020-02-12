@@ -5,9 +5,11 @@ After=network-online.target
 
 [Service]
 Type=simple
-ExecStart=sh -c 'nohup python /usr/local/ServerStatus/client/status-client.py > /tmp/serverstatus_client.log 2>&1 &'
+ExecStart=python /usr/local/ServerStatus/client/status-client.py
+StandardOutput=file:/tmp/serverstatus_client.log
+StandardError=file:/tmp/serverstatus_client.log
 Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target
-Alias=ssc
+Alias=statusc.service

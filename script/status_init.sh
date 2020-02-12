@@ -5,12 +5,12 @@ export PATH
 #==============================================================
 #	Required System: CentOS / Debian / Ubuntu
 #	Description: ServerStatus deployment & management
-#	Version: 1.1.2 (init)
+#	Version: 1.1.3 (init)
 #	Author: Toyo
 #	Maintainer: Matsuri
 #==============================================================
 
-sh_ver="1.1.2"
+sh_ver="1.1.3"
 filepath=$(cd "$(dirname "$0")"; pwd)
 file_1=$(echo -e "${filepath}"|awk -F "$0" '{print $1}')
 file="/usr/local/ServerStatus"
@@ -56,10 +56,10 @@ check_installed_client_status(){
 	fi
 }
 check_pid_server(){
-	PID=`ps -ef| grep "sergate"| grep -v grep| grep -v ".sh"| grep -v "init.d"| grep -v "service"| awk '{print $2}'`
+	PID=`ps -e | grep "sergate" | awk '{print $1}'`
 }
 check_pid_client(){
-	PID=`ps -ef| grep "status-client.py"| grep -v grep| grep -v ".sh"| grep -v "init.d"| grep -v "service"| awk '{print $2}'`
+	PID=`ps aux | grep "status-client.py" | grep -v grep | awk '{print $2}'`
 }
 
 #下载
@@ -163,34 +163,26 @@ Installation_dependency(){
 	mode=$1
 	[[ -z ${mode} ]] && mode="server"
 	if [[ ${mode} == "server" ]]; then
-		python_status=$(python -V)
 		if [[ ${release} == "centos" ]]; then
 			yum update
-			if [[ -z ${python_status} ]]; then
-				yum install -y python unzip vim make net-tools
-				yum groupinstall "Development Tools" -y
-			else
-				yum install -y unzip vim make net-tools
-				yum groupinstall "Development Tools" -y
-			fi
+			yum install -y unzip net-tools
+			yum groupinstall "Development Tools" -y
 		else
 			apt-get update
-			if [[ -z ${python_status} ]]; then
-				apt-get install -y python unzip vim build-essential make
-			else
-				apt-get install -y unzip vim build-essential make
-			fi
+			apt-get install -y unzip net-tools build-essential
 		fi
 	else
-		python_status=$(python -V)
+		py_stat=$(python -V 2>&1); if [[ $? -eq 0 ]]; then epy="y"; else epy="n"; fi
 		if [[ ${release} == "centos" ]]; then
-			if [[ -z ${python_status} ]]; then
-				yum update
+			yum update
+			yum install -y net-tools
+			if [[ ${epy} == "n" ]]; then
 				yum install -y python
 			fi
 		else
-			if [[ -z ${python_status} ]]; then
-				apt-get update
+			apt-get update
+			apt-get install -y net-tools
+			if [[ ${epy} == "n" ]]; then
 				apt-get install -y python
 			fi
 		fi
@@ -658,26 +650,14 @@ Install_caddy(){
 		else
 			echo -e "${Info} Caddy 已安装，开始配置..."
 		fi
-		if [[ ! -s "/usr/local/caddy/Caddyfile" ]]; then
-			cat > "/usr/local/caddy/Caddyfile"<<-EOF
+		cat >> "/usr/local/caddy/Caddyfile"<<-EOF
 http://${server_s}:${server_http_port_s} {
  root ${web_file}
  timeouts none
  gzip
 }
 EOF
-			/etc/init.d/caddy restart
-		else
-			echo -e "${Info} Caddy 配置文件存在内容，ServerStatus 网站配置将追加在末尾"
-			cat >> "/usr/local/caddy/Caddyfile"<<-EOF
-http://${server_s}:${server_http_port_s} {
- root ${web_file}
- timeouts none
- gzip
-}
-EOF
-			/etc/init.d/caddy restart
-		fi
+		/etc/init.d/caddy restart
 	else
 		echo -e "${Info} HTTP 服务部署已跳过，请手动部署。Web 文件位置：${Green_font_prefix}${web_file}${Font_color_suffix}"
 		echo -e "${Tip} 如果文件位置发生改变，请注意修改服务脚本文件 /etc/init.d/status-server 中的 WEB_BIN 变量！"
@@ -714,18 +694,10 @@ Install_ServerStatus_client(){
 		centos_ver=$(cat /etc/redhat-release | grep "release " | awk '{print $4}' | awk -F '.' '{print $1}')
 		if [[ ${centos_ver} -lt 7 ]]; then
 			echo -e "${Info} 检测到您正在使用 CentOS 6（甚至更低版本）系统。由于内置的 Python 版本过低，将导致客户端无法运行"
-			echo -e "${Tip} 如果您仍然要继续安装，请您自行升级 Python 至 2.7 版本。是否要继续？[y/N]"
+			echo -e "${Tip} 如果您仍然要继续安装，请自行安装 Python 2.7。是否要继续？[y/N]"
 			read -e -p "(默认: n 取消安装):" sys_centos6
 			[[ -z "$sys_centos6" ]] && sys_centos6="n"
 			if [[ "${sys_centos6}" == [Nn] ]]; then
-				echo -e "${Info} 已取消...\n" && exit 1
-			fi
-		elif [[ ${centos_ver} -ge 8 ]]; then
-			echo -e "${Info} 检测到您正在使用 CentOS 8，默认情况下不含任何 Python 版本"
-			echo -e "${Tip} 请您自行安装 Python 2.7 并设置为默认版本，是否要继续？[y/N]"
-			read -e -p "(默认: n 取消安装):" sys_centos8
-			[[ -z "$sys_centos8" ]] && sys_centos8="n"
-			if [[ "${sys_centos8}" == [Nn] ]]; then
 				echo -e "${Info} 已取消...\n" && exit 1
 			fi
 		fi
@@ -791,24 +763,28 @@ Update_ServerStatus_client(){
 Start_ServerStatus_server(){
 	check_installed_server_status
 	check_pid_server
-	[[ ! -z ${PID} ]] && echo -e "${Error} ServerStatus 已运行，请检查！\n" && exit 1
+	[[ ! -z ${PID} ]] && echo -e "${Error} ServerStatus 服务端已运行，请检查！\n" && exit 1
 	/etc/init.d/status-server start
 }
 Stop_ServerStatus_server(){
 	check_installed_server_status
 	check_pid_server
-	[[ -z ${PID} ]] && echo -e "${Error} ServerStatus 未运行，请检查！\n" && exit 1
+	[[ -z ${PID} ]] && echo -e "${Error} ServerStatus 服务端未运行，请检查！\n" && exit 1
 	/etc/init.d/status-server stop
 }
 Restart_ServerStatus_server(){
 	check_installed_server_status
 	check_pid_server
-	[[ ! -z ${PID} ]] && /etc/init.d/status-server stop
-	/etc/init.d/status-server start
+	if [[ ! -z ${PID} ]]; then
+		/etc/init.d/status-server stop
+		/etc/init.d/status-server start
+	else
+		/etc/init.d/status-server start
+	fi
 }
 Uninstall_ServerStatus_server(){
 	check_installed_server_status
-	echo -e "${Tip} 是否要卸载服务端？（若同时安装了客户端，则仅卸载服务端）[y/N]"
+	echo -e "${Tip} 是否要卸载 ServerStatus 服务端？（若同时安装了客户端，则仅卸载服务端）[y/N]"
 	echo
 	read -e -p "(默认: n):" unyn
 	[[ -z ${unyn} ]] && unyn="n"
@@ -845,24 +821,28 @@ Uninstall_ServerStatus_server(){
 Start_ServerStatus_client(){
 	check_installed_client_status
 	check_pid_client
-	[[ ! -z ${PID} ]] && echo -e "${Error} ServerStatus 已运行，请检查！\n" && exit 1
+	[[ ! -z ${PID} ]] && echo -e "${Error} ServerStatus 客户端已运行，请检查！\n" && exit 1
 	/etc/init.d/status-client start
 }
 Stop_ServerStatus_client(){
 	check_installed_client_status
 	check_pid_client
-	[[ -z ${PID} ]] && echo -e "${Error} ServerStatus 未运行，请检查！\n" && exit 1
+	[[ -z ${PID} ]] && echo -e "${Error} ServerStatus 客户端未运行，请检查！\n" && exit 1
 	/etc/init.d/status-client stop
 }
 Restart_ServerStatus_client(){
 	check_installed_client_status
 	check_pid_client
-	[[ ! -z ${PID} ]] && /etc/init.d/status-client stop
-	/etc/init.d/status-client start
+	if [[ ! -z ${PID} ]]; then
+		/etc/init.d/status-client stop
+		/etc/init.d/status-client start
+	else
+		/etc/init.d/status-client start
+	fi
 }
 Uninstall_ServerStatus_client(){
 	check_installed_client_status
-	echo -e "${Tip} 是否要卸载客户端？（若同时安装了服务端，则仅卸载客户端）[y/N]"
+	echo -e "${Tip} 是否要卸载 ServerStatus 客户端？（若同时安装了服务端，则仅卸载客户端）[y/N]"
 	echo
 	read -e -p "(默认: n):" unyn
 	[[ -z ${unyn} ]] && unyn="n"
@@ -914,38 +894,52 @@ View_server_Log(){
 Add_iptables_OUT(){
 	iptables_ADD_OUT_port=$1
 	iptables -I OUTPUT -m state --state NEW -m tcp -p tcp --dport ${iptables_ADD_OUT_port} -j ACCEPT
+	ip6tables -I OUTPUT -m state --state NEW -m tcp -p tcp --dport ${iptables_ADD_OUT_port} -j ACCEPT
 	iptables -I OUTPUT -m state --state NEW -m udp -p udp --dport ${iptables_ADD_OUT_port} -j ACCEPT
+	ip6tables -I OUTPUT -m state --state NEW -m udp -p udp --dport ${iptables_ADD_OUT_port} -j ACCEPT
 }
 Del_iptables_OUT(){
 	iptables_DEL_OUT_port=$1
 	iptables -D OUTPUT -m state --state NEW -m tcp -p tcp --dport ${iptables_DEL_OUT_port} -j ACCEPT
+	ip6tables -D OUTPUT -m state --state NEW -m tcp -p tcp --dport ${iptables_DEL_OUT_port} -j ACCEPT
 	iptables -D OUTPUT -m state --state NEW -m udp -p udp --dport ${iptables_DEL_OUT_port} -j ACCEPT
+	ip6tables -D OUTPUT -m state --state NEW -m udp -p udp --dport ${iptables_DEL_OUT_port} -j ACCEPT
 }
 Add_iptables(){
 	iptables_ADD_IN_port=$1
 	iptables -I INPUT -m state --state NEW -m tcp -p tcp --dport ${iptables_ADD_IN_port} -j ACCEPT
+	ip6tables -I INPUT -m state --state NEW -m tcp -p tcp --dport ${iptables_ADD_IN_port} -j ACCEPT
 	iptables -I INPUT -m state --state NEW -m udp -p udp --dport ${iptables_ADD_IN_port} -j ACCEPT
+	ip6tables -I INPUT -m state --state NEW -m udp -p udp --dport ${iptables_ADD_IN_port} -j ACCEPT
 }
 Del_iptables(){
 	iptables_DEL_IN_port=$1
 	iptables -D INPUT -m state --state NEW -m tcp -p tcp --dport ${iptables_DEL_IN_port} -j ACCEPT
+	ip6tables -D INPUT -m state --state NEW -m tcp -p tcp --dport ${iptables_DEL_IN_port} -j ACCEPT
 	iptables -D INPUT -m state --state NEW -m udp -p udp --dport ${iptables_DEL_IN_port} -j ACCEPT
+	ip6tables -D INPUT -m state --state NEW -m udp -p udp --dport ${iptables_DEL_IN_port} -j ACCEPT
 }
 Save_iptables(){
 	if [[ ${release} == "centos" ]]; then
 		service iptables save
+		service ip6tables save
 	else
 		iptables-save > /etc/iptables.up.rules
+		ip6tables-save > /etc/ip6tables.up.rules
 	fi
 }
 Set_iptables(){
 	if [[ ${release} == "centos" ]]; then
 		service iptables save
+		service ip6tables save
 		chkconfig --level 2345 iptables on
 	else
 		iptables-save > /etc/iptables.up.rules
 		echo -e '#!/bin/bash\n/sbin/iptables-restore < /etc/iptables.up.rules' > /etc/network/if-pre-up.d/iptables
 		chmod +x /etc/network/if-pre-up.d/iptables
+		ip6tables-save > /etc/ip6tables.up.rules
+		echo -e '#!/bin/bash\n/sbin/ip6tables-restore < /etc/ip6tables.up.rules' > /etc/network/if-pre-up.d/ip6tables
+		chmod +x /etc/network/if-pre-up.d/ip6tables
 	fi
 }
 Update_Shell(){
@@ -959,7 +953,7 @@ Update_Shell(){
 		rm -rf /etc/init.d/status-server
 		Service_Server_Status_server
 	fi
-	wget -N --no-check-certificate "https://raw.githubusercontent.com/LilligantMatsuri/ServerStatus/master/script/status_init.sh" -O status.sh && chmod +x status.sh
+	wget --no-check-certificate "https://raw.githubusercontent.com/LilligantMatsuri/ServerStatus/master/script/status_init.sh" -O status.sh && chmod +x status.sh
 	echo -e "${Info} 脚本已更新至最新版本 ${Red_font_prefix}[v${sh_new_ver}]${Font_color_suffix}！"
 	echo -e "${Tip} 由于更新方式为覆盖当前运行的脚本，若产生报错信息，无视即可\n" && exit 0
 }
