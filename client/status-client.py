@@ -84,7 +84,7 @@ def get_cpu():
 	if st == 0:
 		st = 1
 	result = 100-(t[len(t)-1]*100.00/st)
-	return round(result)
+	return round(result, 1)
 
 class Traffic:
 	def __init__(self):
@@ -146,10 +146,15 @@ def get_network(ip_version):
 
 if __name__ == '__main__':
 	socket.setdefaulttimeout(30)
+	i = 1
 	while 1:
 		try:
-			print("Connecting...")
-			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			if i % 2 == 0:
+				print("Connecting via IPv6...")
+				s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+			else:
+				print("Connecting via IPv4...")
+				s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			s.connect((SERVER, PORT))
 			data = s.recv(1024)
 			if data.find(b"Authentication required") > -1:
@@ -215,6 +220,7 @@ if __name__ == '__main__':
 			print("Disconnected...")
 			# keep on trying after a disconnect
 			s.close()
+			i += 1
 			time.sleep(3)
 		except Exception as e:
 			print("Caught Exception:", e)

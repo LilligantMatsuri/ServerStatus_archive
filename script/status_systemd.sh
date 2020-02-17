@@ -5,12 +5,12 @@ export PATH
 #==============================================================
 #	Required System: CentOS 7+ / Debian 8+ / Ubuntu 15.04+
 #	Description: ServerStatus deployment & management
-#	Version: 2.0.2 (systemd)
+#	Version: 2.0.3 (systemd)
 #	Author: Toyo
 #	Maintainer: Matsuri
 #==============================================================
 
-sh_ver="2.0.2"
+sh_ver="2.0.3"
 filepath=$(cd "$(dirname "$0")"; pwd)
 file_1=$(echo -e "${filepath}"|awk -F "$0" '{print $1}')
 file="/usr/local/ServerStatus"
@@ -145,11 +145,10 @@ Service_Server_Status_client(){
 Installation_dependency(){
 	if [[ ${release} == "centos" ]]; then
 		yum update
-		yum install -y unzip net-tools
-		yum groupinstall "Development Tools" -y
+		yum install -y unzip net-tools make gcc gcc-c++
 	else
 		apt-get update
-		apt-get install -y unzip net-tools build-essential
+		apt-get install -y unzip net-tools make gcc g++
 	fi
 }
 Installation_Python(){
@@ -227,11 +226,11 @@ Set_server(){
 	mode=$1
 	[[ -z ${mode} ]] && mode="server"
 	if [[ ${mode} == "server" ]]; then
-		echo -e "${Tip} 请输入服务端网站的域名[server]，如果留空则默认使用本机 IP 地址"
+		echo -e "${Tip} 请输入服务端网站的域名，如果留空则默认使用本机 IP 地址"
 		read -e -p "(默认: 本机 IP):" server_s
 		[[ -z "$server_s" ]] && server_s=""
 	else
-		echo -e "${Tip} 请输入服务端的 IP/域名[server]"
+		echo -e "${Tip} 请输入服务端的 IP/域名（支持 IPv6）"
 		read -e -p "(默认: 127.0.0.1):" server_s
 		[[ -z "$server_s" ]] && server_s="127.0.0.1"
 	fi
@@ -737,7 +736,7 @@ Start_ServerStatus_server(){
 		echo -e "${Error} ServerStatus 服务端已运行，请检查！\n" && exit 1
 	else
 		systemctl start status-server
-		sleep 1s 
+		sleep 2s 
 		check_pid_server
 		if [[ ! -z ${PID} ]]; then
 			echo -e "${Info} ServerStatus 服务端启动成功！"
@@ -753,7 +752,7 @@ Stop_ServerStatus_server(){
 		echo -e "${Error} ServerStatus 服务端未运行，请检查！\n" && exit 1
 	else
 		systemctl stop status-server
-		sleep 1s
+		sleep 2s
 		check_pid_server
 		if [[ -z ${PID} ]]; then
 			echo -e "${Info} ServerStatus 服务端停止成功！"
@@ -813,7 +812,7 @@ Start_ServerStatus_client(){
 		echo -e "${Error} ServerStatus 客户端已运行，请检查！\n" && exit 1
 	else
 		systemctl start status-client
-		sleep 1s 
+		sleep 2s 
 		check_pid_client
 		if [[ ! -z ${PID} ]]; then
 			echo -e "${Info} ServerStatus 客户端启动成功！"
@@ -829,7 +828,7 @@ Stop_ServerStatus_client(){
 		echo -e "${Error} ServerStatus 客户端未运行，请检查！\n" && exit 1
 	else
 		systemctl stop status-client
-		sleep 1s
+		sleep 2s
 		check_pid_client
 		if [[ -z ${PID} ]]; then
 			echo -e "${Info} ServerStatus 服务端停止成功！"
@@ -880,10 +879,10 @@ View_ServerStatus_client(){
 	clear && echo "————————————————————" && echo
 	echo -e "  ServerStatus 客户端配置信息: 
  
-  服务端 \t: ${Green_font_prefix}${client_server}${Font_color_suffix}
-  端口　 \t: ${Green_font_prefix}${client_port}${Font_color_suffix}
-  用户名 \t: ${Green_font_prefix}${client_user}${Font_color_suffix}
-  密码　 \t: ${Green_font_prefix}${client_password}${Font_color_suffix}
+  服务端: ${Green_font_prefix}${client_server}${Font_color_suffix}
+  端口　: ${Green_font_prefix}${client_port}${Font_color_suffix}
+  用户名: ${Green_font_prefix}${client_user}${Font_color_suffix}
+  密码　: ${Green_font_prefix}${client_password}${Font_color_suffix}
  
 ————————————————————"
 }

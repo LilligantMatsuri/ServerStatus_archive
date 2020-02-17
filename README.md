@@ -5,10 +5,10 @@
 <h1 align="center">ServerStatus</h1>
 
 <div align="center">
-ServerStatus 是一个提供 Web 界面的云探针，<br />实时展示网络连接、CPU、内存、硬盘容量等数据。
+ServerStatus 是一个提供 Web 界面的云探针，<br>实时展示网络连接、CPU、内存、硬盘容量等数据。
 </div>
 
-<div align="center">
+<div align="center"><br>
 <a href="LICENSE"><img src="https://img.shields.io/github/license/LilligantMatsuri/ServerStatus" alt="LICENSE"></a>
 <a href="https://www.python.org"><img src="https://img.shields.io/badge/Python-%E2%89%A5%202.7-%233776AB?logo=python" alt="Python"></a>
 <a href="https://www.centos.org"><img src="https://img.shields.io/badge/CentOS-%E2%89%A5%207-%23262577?logo=centos" alt="CentOS"></a>
@@ -94,11 +94,9 @@ ServerStatus
 
 #### Q：客户端无法正常运行？
 
-**A**：客户端的运行依赖 Python 2.7 及以上（此分支已兼容 3.x）。 
+**A**：客户端的运行依赖 Python 2.7 及以上（此分支已兼容 3.x）。CentOS ≤ 6 / Debian ≤ 6 / Ubuntu ≤ 13.10 的软件包内 Python 版本不符合要求，如果出于某些原因不得不使用这些系统，则需在脚本部署前自行安装 Python 并正确配置（命令 `python -V` 能够打印版本号即可）。
 
-CentOS ≤ 6 / Debian ≤ 6 / Ubuntu ≤ 13.10 的软件包内 Python 版本不符合要求，如果出于某些原因不得不使用这些系统，则需在使用脚本前自行安装 Python 并正确配置（命令 `python -V` 能够打印版本号即可）。
-
-此外，CentOS 8 默认没有内置 Python，脚本将自动安装 2.7 版本并设为默认。如果事先已经安装，则没有影响。
+另外，如果客户端成功启动，但服务端依然接收不到数据，请检查是否正确输入了用户名、密码等信息。
 
 #### Q：终端输入中文显示错误？
 
@@ -108,23 +106,19 @@ CentOS ≤ 6 / Debian ≤ 6 / Ubuntu ≤ 13.10 的软件包内 Python 版本不�
 
 ### 服务端
 
-- 启动：`systemctl start statuss`
+- 启动：`systemctl start statuss` 或 `service status-server start`
 
-- 停止：`systemctl stop statuss`
+- 停止：`systemctl stop statuss` 或 `service status-server stop`
 
-- 状态：`systemctl status statuss`
-
-- 若不支持 systemctl 则使用 `service status-server start`，其他命令以此类推
+- 状态：`systemctl status statuss` 或 `service status-server status`
 
 ### 客户端
 
-- 启动：`systemctl start statusc`
+- 启动：`systemctl start statusc`或 `service status-client start`
 
-- 停止：`systemctl stop statusc`
+- 停止：`systemctl stop statusc`或 `service status-client stop`
 
-- 状态：`systemctl status statusc`
-
-- 若不支持 systemctl 则使用 `service status-client start`，其他命令以此类推
+- 状态：`systemctl status statusc`或 `service status-client status`
 
 ### Caddy
 
@@ -137,6 +131,15 @@ CentOS ≤ 6 / Debian ≤ 6 / Ubuntu ≤ 13.10 的软件包内 Python 版本不�
 - 状态：`service caddy status`
 
 ## 更新
+
+**2020.02.17**
+
+> - 免除不必要的依赖
+> - 客户端
+>   - 支持通过 IPv6 连接服务端
+>   
+>   - 修复使用 Python 3 时 CPU 统计异常
+> - 稍许减少前端 CPU 占用
 
 **2020.02.12**
 
@@ -152,7 +155,7 @@ CentOS ≤ 6 / Debian ≤ 6 / Ubuntu ≤ 13.10 的软件包内 Python 版本不�
 
 **2020.02.10**
 
-> - 新增部署脚本 v2，使用 systemd 管理服务
+> - 新增 systemd 部署脚本
 
 **2020.02.03**
 
@@ -180,8 +183,6 @@ CentOS ≤ 6 / Debian ≤ 6 / Ubuntu ≤ 13.10 的软件包内 Python 版本不�
 
 **2020.01.23**
 
-> - 整理代码
-> 
 > - 调整前端样式
 > 
 > - 恢复 IPv6 状态显示
@@ -196,5 +197,6 @@ CentOS ≤ 6 / Debian ≤ 6 / Ubuntu ≤ 13.10 的软件包内 Python 版本不�
 * [ServerStatus](https://github.com/mojeda/ServerStatus) by **mojeda**
 * [ServerStatus](https://github.com/BotoX/ServerStatus) by **BotoX**
 * [ServerStatus-Toyo](https://github.com/ToyoDAdoubi/ServerStatus-Toyo) by **ToyoDAdoubi**
+* [ServerStatus](https://github.com/cppla/ServerStatus) by **cppla**
 * [flag-icon-css](https://github.com/lipis/flag-icon-css) by **lipis**
 * [![jsDelivr](https://www.jsdelivr.com/img/logo-horizontal.svg)](https://www.jsdelivr.com/)

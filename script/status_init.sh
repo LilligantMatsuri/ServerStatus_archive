@@ -5,12 +5,12 @@ export PATH
 #==============================================================
 #	Required System: CentOS / Debian / Ubuntu
 #	Description: ServerStatus deployment & management
-#	Version: 1.1.3 (init)
+#	Version: 1.1.4 (init)
 #	Author: Toyo
 #	Maintainer: Matsuri
 #==============================================================
 
-sh_ver="1.1.3"
+sh_ver="1.1.4"
 filepath=$(cd "$(dirname "$0")"; pwd)
 file_1=$(echo -e "${filepath}"|awk -F "$0" '{print $1}')
 file="/usr/local/ServerStatus"
@@ -165,11 +165,10 @@ Installation_dependency(){
 	if [[ ${mode} == "server" ]]; then
 		if [[ ${release} == "centos" ]]; then
 			yum update
-			yum install -y unzip net-tools
-			yum groupinstall "Development Tools" -y
+			yum install -y unzip net-tools make gcc gcc-c++
 		else
 			apt-get update
-			apt-get install -y unzip net-tools build-essential
+			apt-get install -y unzip net-tools make gcc g++
 		fi
 	else
 		py_stat=$(python -V 2>&1); if [[ $? -eq 0 ]]; then epy="y"; else epy="n"; fi
@@ -241,11 +240,11 @@ Set_server(){
 	mode=$1
 	[[ -z ${mode} ]] && mode="server"
 	if [[ ${mode} == "server" ]]; then
-		echo -e "${Tip} 请输入服务端网站的域名[server]，如果留空则默认使用本机 IP 地址"
+		echo -e "${Tip} 请输入服务端网站的域名，如果留空则默认使用本机 IP 地址"
 		read -e -p "(默认: 本机 IP):" server_s
 		[[ -z "$server_s" ]] && server_s=""
 	else
-		echo -e "${Tip} 请输入服务端的 IP/域名[server]"
+		echo -e "${Tip} 请输入服务端的 IP/域名（支持 IPv6）"
 		read -e -p "(默认: 127.0.0.1):" server_s
 		[[ -z "$server_s" ]] && server_s="127.0.0.1"
 	fi
@@ -874,10 +873,10 @@ View_ServerStatus_client(){
 	clear && echo "————————————————————" && echo
 	echo -e "  ServerStatus 客户端配置信息: 
  
-  服务端 \t: ${Green_font_prefix}${client_server}${Font_color_suffix}
-  端口　 \t: ${Green_font_prefix}${client_port}${Font_color_suffix}
-  用户名 \t: ${Green_font_prefix}${client_user}${Font_color_suffix}
-  密码　 \t: ${Green_font_prefix}${client_password}${Font_color_suffix}
+  服务端: ${Green_font_prefix}${client_server}${Font_color_suffix}
+  端口　: ${Green_font_prefix}${client_port}${Font_color_suffix}
+  用户名: ${Green_font_prefix}${client_user}${Font_color_suffix}
+  密码　: ${Green_font_prefix}${client_password}${Font_color_suffix}
  
 ————————————————————"
 }
