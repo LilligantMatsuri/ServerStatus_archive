@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 SERVER = "127.0.0.1"
 PORT = PORT
@@ -19,12 +19,9 @@ import collections
 import platform
 
 def get_uptime():
-	f = open('/proc/uptime', 'r')
-	uptime = f.readline()
-	f.close()
-	uptime = uptime.split('.', 2)
-	time = int(uptime[0])
-	return int(time)
+	with open('/proc/uptime', 'r') as f:
+		uptime = f.readline().split('.', 2)
+		return int(uptime[0])
 
 def get_memory():
 	re_parser = re.compile(r'^(?P<key>\S*):\s*(?P<value>\d*)\s*kB')
@@ -38,11 +35,14 @@ def get_memory():
 
 	MemTotal = float(result['MemTotal'])
 	MemFree = float(result['MemFree'])
+	Buffers = float(result['Buffers'])
 	Cached = float(result['Cached'])
-	MemUsed = MemTotal - (Cached + MemFree)
+	SReclaimable = float(result['SReclaimable'])
+	MemUsed = MemTotal - (MemFree + Buffers + Cached + SReclaimable)
 	SwapTotal = float(result['SwapTotal'])
 	SwapFree = float(result['SwapFree'])
-	return int(MemTotal), int(MemUsed), int(SwapTotal), int(SwapFree)
+	SwapUsed = SwapTotal - SwapFree
+	return int(MemTotal), int(MemUsed), int(SwapTotal), int(SwapUsed)
 
 def get_hdd():
 	p = subprocess.check_output(['df', '-Tlm', '--total', '-t', 'ext4', '-t', 'ext3', '-t', 'ext2', '-t', 'reiserfs', '-t', 'jfs', '-t', 'ntfs', '-t', 'fat32', '-t', 'btrfs', '-t', 'fuseblk', '-t', 'zfs', '-t', 'simfs', '-t', 'xfs']).decode("Utf-8")
@@ -65,12 +65,12 @@ def get_load():
 	#return os.getloadavg()[0]
 
 def get_time():
-	stat_file = open("/proc/stat", "r")
-	time_list = stat_file.readline().split(' ')[2:6]
-	stat_file.close()
-	for i in range(len(time_list))  :
-		time_list[i] = int(time_list[i])
-	return time_list
+	with open("/proc/stat", "r") as f:
+		time_list = f.readline().split(' ')[2:6]
+		for i in range(len(time_list)):
+			time_list[i] = int(time_list[i])
+		return time_list
+
 def delta_time():
 	x = get_time()
 	time.sleep(INTERVAL)
@@ -78,6 +78,7 @@ def delta_time():
 	for i in range(len(x)):
 		y[i]-=x[i]
 	return y
+
 def get_cpu():
 	t = delta_time()
 	st = sum(t)
@@ -86,39 +87,38 @@ def get_cpu():
 	result = 100-(t[len(t)-1]*100.00/st)
 	return round(result, 1)
 
-class Traffic:
+class Netspeed:
 	def __init__(self):
 		self.rx = collections.deque(maxlen=10)
 		self.tx = collections.deque(maxlen=10)
 	def get(self):
-		f = open('/proc/net/dev', 'r')
-		net_dev = f.readlines()
-		f.close()
-		avgrx = 0; avgtx = 0
+		with open('/proc/net/dev', 'r') as f:
+			net_dev = f.readlines()
+			avgrx = 0; avgtx = 0
 
-		for dev in net_dev[2:]:
-			dev = dev.split(':')
-			if dev[0].strip() == "lo" or dev[0].find("tun") > -1:
-				continue
-			dev = dev[1].split()
-			avgrx += int(dev[0])
-			avgtx += int(dev[8])
+			for dev in net_dev[2:]:
+				dev = dev.split(':')
+				if dev[0].strip() == "lo" or dev[0].find("tun") > -1:
+					continue
+				dev = dev[1].split()
+				avgrx += int(dev[0])
+				avgtx += int(dev[8])
 
-		self.rx.append(avgrx)
-		self.tx.append(avgtx)
-		avgrx = 0; avgtx = 0
+			self.rx.append(avgrx)
+			self.tx.append(avgtx)
+			avgrx = 0; avgtx = 0
 
-		l = len(self.rx)
-		for x in range(l - 1):
-			avgrx += self.rx[x+1] - self.rx[x]
-			avgtx += self.tx[x+1] - self.tx[x]
+			l = len(self.rx)
+			for x in range(l - 1):
+				avgrx += self.rx[x+1] - self.rx[x]
+				avgtx += self.tx[x+1] - self.tx[x]
 
-		avgrx = int(avgrx / l / INTERVAL)
-		avgtx = int(avgtx / l / INTERVAL)
+			avgrx = int(avgrx / l / INTERVAL)
+			avgtx = int(avgtx / l / INTERVAL)
 
-		return avgrx, avgtx
+			return avgrx, avgtx
 
-def liuliang():
+def get_traffic():
     NET_IN = 0
     NET_OUT = 0
     with open('/proc/net/dev') as f:
@@ -130,7 +130,7 @@ def liuliang():
                 else:
                     NET_IN += int(netinfo[0][1])
                     NET_OUT += int(netinfo[0][9])
-    return NET_IN, NET_OUT
+		return NET_IN, NET_OUT
 
 def get_network(ip_version):
 	if(ip_version == 4):
@@ -181,15 +181,15 @@ if __name__ == '__main__':
 				print(data)
 				raise socket.error
 
-			traffic = Traffic()
-			traffic.get()
+			netspeed = Netspeed()
+			netspeed.get()
 			while 1:
 				CPU = get_cpu()
-				NetRx, NetTx = traffic.get()
-				NET_IN, NET_OUT = liuliang()
+				NetRx, NetTx = netspeed.get()
+				NET_IN, NET_OUT = get_traffic()
 				Uptime = get_uptime()
 				Load = get_load()
-				MemoryTotal, MemoryUsed, SwapTotal, SwapFree = get_memory()
+				MemoryTotal, MemoryUsed, SwapTotal, SwapUsed = get_memory()
 				HDDTotal, HDDUsed = get_hdd()
 
 				array = {}
@@ -204,7 +204,7 @@ if __name__ == '__main__':
 				array['memory_total'] = MemoryTotal
 				array['memory_used'] = MemoryUsed
 				array['swap_total'] = SwapTotal
-				array['swap_used'] = SwapTotal - SwapFree
+				array['swap_used'] = SwapUsed
 				array['hdd_total'] = HDDTotal
 				array['hdd_used'] = HDDUsed
 				array['cpu'] = CPU

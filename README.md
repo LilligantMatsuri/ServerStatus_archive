@@ -5,7 +5,7 @@
 <h1 align="center">ServerStatus</h1>
 
 <div align="center">
-ServerStatus 是一个提供 Web 界面的云探针，<br>实时展示网络连接、CPU、内存、硬盘容量等数据。
+ServerStatus 是一个提供 Web 界面的云探针，<br>实时展示网络连接、CPU、内存、硬盘容量等数据
 </div>
 
 <div align="center"><br>
@@ -26,10 +26,10 @@ ServerStatus 是一个提供 Web 界面的云探针，<br>实时展示网络连�
 
 **v2 (systemd)**
 
-CentOS ≥ 7 / Debian ≥ 8 / Ubuntu ≥ 15.04 默认支持 systemd，低版本需要手动配置
+CentOS ≥ 7／Debian ≥ 8／Ubuntu ≥ 15.04 默认支持 systemd，低版本需要手动配置
 
 ```bash
-wget --no-check-certificate https://git.io/Jvc6U -O status.sh && chmod +x status.sh && bash status.sh
+wget https://git.io/Jvc6U -O status.sh && chmod +x status.sh && bash status.sh
 ```
 
 **v1 (init)**
@@ -37,7 +37,7 @@ wget --no-check-certificate https://git.io/Jvc6U -O status.sh && chmod +x status
 系统低于上述版本，或由于其他原因不能使用 systemd 管理服务
 
 ```bash
-wget --no-check-certificate https://git.io/Jvc6G -O status.sh && chmod +x status.sh && bash status.sh
+wget https://git.io/Jvc6G -O status.sh && chmod +x status.sh && bash status.sh
 ```
 
 运行脚本后将显示如下菜单，根据提示进行操作即可
@@ -67,7 +67,7 @@ wget --no-check-certificate https://git.io/Jvc6G -O status.sh && chmod +x status
 请输入选项的编号 [0-10]:
 ```
 
-### 文件目录
+### 目录结构
 
 ServerStatus 安装路径：/usr/local/ServerStatus
 
@@ -94,13 +94,17 @@ ServerStatus
 
 #### Q：客户端无法正常运行？
 
-**A**：客户端的运行依赖 Python 2.7 及以上（此分支已兼容 3.x）。CentOS ≤ 6 / Debian ≤ 6 / Ubuntu ≤ 13.10 的软件包内 Python 版本不符合要求，如果出于某些原因不得不使用这些系统，则需在脚本部署前自行安装 Python 并正确配置（命令 `python -V` 能够打印版本号即可）。
-
-另外，如果客户端成功启动，但服务端依然接收不到数据，请检查是否正确输入了用户名、密码等信息。
+**A**：客户端的运行依赖 Python 2.7 及以上（此分支已兼容 3.x）。CentOS ≤ 6／Debian ≤ 6／Ubuntu ≤ 13.10 的软件包管理器内的 Python 版本不符合要求，如果出于某些原因不得不使用这些系统，则需在脚本部署前自行安装 Python 并正确配置（命令 `python -V` 能够输出版本号即可）。
+如果客户端成功启动，但服务端依然接收不到数据，请检查是否输入了正确的用户名、密码等信息。
 
 #### Q：终端输入中文显示错误？
 
-**A**：输入的节点名称、位置等含有中文字符时，如果终端模拟器不支持中文编码，将无法正常显示。可以先输入任意内容，然后再修改节点配置文件中的相应字段。**修改后需要重启服务端才能在网页上体现**。
+**A**：输入的节点名称、位置等含有中文字符时，如果终端模拟器不支持中文编码，将无法正常显示。可以先输入任意内容，然后再修改节点配置文件中的“name”字段。修改后，重启服务端才会生效。
+
+#### Q：如何在“地区”一栏添加国旗图标？
+
+**A**：打开节点配置文件，在“location”字段添加 `<span class=\\\"flag-icon flag-icon-xx\\\"></span>` （“xx”为二位字母国家地区代码，反斜杠的作用是转义），例如中国国旗 :cn: 为 `flag-icon-cn` 。同样地，修改完毕后需要重启服务端。
+更详细的用法请参考 flag-icon-css 的[使用说明](https://github.com/lipis/flag-icon-css#usage)。
 
 ## 管理
 
@@ -114,11 +118,11 @@ ServerStatus
 
 ### 客户端
 
-- 启动：`systemctl start statusc`或 `service status-client start`
+- 启动：`systemctl start statusc` 或 `service status-client start`
 
-- 停止：`systemctl stop statusc`或 `service status-client stop`
+- 停止：`systemctl stop statusc` 或 `service status-client stop`
 
-- 状态：`systemctl status statusc`或 `service status-client status`
+- 状态：`systemctl status statusc` 或 `service status-client status`
 
 ### Caddy
 
@@ -130,27 +134,31 @@ ServerStatus
 
 - 状态：`service caddy status`
 
-## 更新
+## 日志
+
+**2020.06.18**
+
+> - 客户端
+>   - 修正内存使用量的计算方式
+>   - 优化代码
+> - 部署脚本
+>   - 修复服务脚本路径不存在导致的安装失败
+>   - wget 安全下载
 
 **2020.02.17**
 
 > - 免除不必要的依赖
 > - 客户端
 >   - 支持通过 IPv6 连接服务端
->   
->   - 修复使用 Python 3 时 CPU 统计异常
-> - 稍许减少前端 CPU 占用
+>   - 修复 Python 3 下 CPU 使用量统计异常
+> - 稍许减少网页 CPU 占用
 
 **2020.02.12**
 
-> - 修复 systemd 服务配置
-> 
-> - 更新部署脚本
->   
+> - 修复 systemd 服务脚本
+> - 部署脚本
 >   - 改进各种状态检测
->   
 >   - 优化安装和管理流程
->   
 >   - 防火墙添加 IPv6 规则
 
 **2020.02.10**
@@ -163,35 +171,28 @@ ServerStatus
 
 **2020.02.01**
 
-> - 更新部署脚本
->   
+> - 部署脚本
 >   - 更正客户端下载链接
->   
 >   - 修复 CentOS 版本检测错误
->   
 >   - 改进提示信息
-> 
-> - 调整前端样式
+> - 调整网页样式
 
 **2020.01.29**
 
 > - 更新部署脚本
-> 
 > - 添加 flag-icon-css 支持
-> 
-> - 前端静态库使用 CDN
+> - 前端静态文件使用 CDN
 
 **2020.01.23**
 
-> - 调整前端样式
-> 
+> - 调整网页样式
 > - 恢复 IPv6 状态显示
 
-（过往更新日志参见上游）
+（过往更新记录参见上游）
 
 ## 致谢
 
-此分支只是在 Toyo 所做工作的基础上进行维护，确保它一直可用、易用，并没有多少实质性的贡献。谨向所有上游代码作者以及相关开源项目作者表示感谢。
+此分支只是在 Toyo 所做工作的基础上进行维护，确保它一直可用、易用，并没有实质性的贡献。谨向所有上游代码作者以及相关开源项目作者表示感谢。
 
 * [Uptime Checker script](https://www.lowendtalk.com/discussion/comment/169690#Comment_169690) by **BlueVM**
 * [ServerStatus](https://github.com/mojeda/ServerStatus) by **mojeda**
