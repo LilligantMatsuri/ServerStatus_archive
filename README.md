@@ -172,11 +172,11 @@ ServerStatus
 
 **2020.02.10**
 
-> - 新增 systemd 部署脚本
+> - 新增 systemd 部署脚本  [#3](https://github.com/LilligantMatsuri/ServerStatus/issues/3)
 
 **2020.02.03**
 
-> - 客户端兼容 Python 3
+> - 客户端兼容 Python 3  [#2](https://github.com/LilligantMatsuri/ServerStatus/issues/2)
 
 **2020.02.01**
 
